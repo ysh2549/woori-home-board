@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>네일다예쁨 릴스 편집기</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Gowun+Dodum&family=Jua&family=Nanum+Gothic:wght@400;700;800&family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f1117;
+      --panel: #171a23;
+      --panel-2: #1f2430;
+      --border: #2c3344;
+      --text: #f3f5f9;
+      --muted: #98a2b3;
+      --accent: #f7c948;
+      --accent-2: #ff7eb6;
+      --mint: #5eead4;
+      --danger: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 15px;
+    }
+    .brand span.badge {
+      background: rgba(247, 201, 72, 0.16);
+      color: var(--accent);
+      border: 1px solid rgba(247, 201, 72, 0.4);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button, .btn {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: 0.15s ease;
+    }
+    button:hover, .btn:hover { border-color: #4b556b; background: #262c3b; }
+    button.primary {
+      background: var(--accent);
+      color: #111;
+      border-color: var(--accent);
+      font-weight: 800;
+    }
+    button.primary:hover { filter: brightness(1.06); }
+    button.pink {
+      background: var(--accent-2);
+      color: #111;
+      border-color: var(--accent-2);
+      font-weight: 800;
+    }
+    button.danger { color: var(--danger); border-color: rgba(248,113,113,0.35); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    input[type="text"], input[type="number"], select, textarea {
+      background: #10131a;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 6px 8px;
+      font-size: 12px;
+      font-family: inherit;
+    }
+    input[type="range"] { accent-color: var(--accent); cursor: pointer; }
+    .workspace {
+      display: grid;
+      grid-template-columns: 270px minmax(300px, 1fr) 390px;
+      gap: 12px;
+      padding: 12px;
+      max-width: 1520px;
+      margin: 0 auto;
+    }
+    @media (max-width: 1120px) {
+      .workspace { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 800;
+      font-size: 13px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .muted { color: var(--muted); font-size: 11px; }
+    /* Clip list */
+    .clip-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      max-height: 620px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    @media (max-width: 1120px) {
+      .clip-list { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); max-height: 240px; }
+    }
+    .clip-card {
+      background: var(--panel-2);
+      border: 2px solid transparent;
+      border-radius: 9px;
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .clip-card.active { border-color: var(--accent); }
+    .clip-thumb {
+      width: 100%;
+      aspect-ratio: 9 / 12;
+      object-fit: cover;
+      background: #000;
+      display: block;
+    }
+    .clip-meta {
+      padding: 5px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .clip-name {
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .clip-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 3px;
+    }
+    .clip-actions button {
+      padding: 2px 5px;
+      font-size: 10px;
+      border-radius: 5px;
+    }
+    /* Preview center */
+    .preview-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .canvas-box {
+      width: 100%;
+      max-width: 340px;
+      aspect-ratio: 9 / 16;
+      background: #050608;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      position: relative;
+      touch-action: none;
+    }
+    canvas#stage {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+    canvas#stage:active { cursor: grabbing; }
+    .drag-hint {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.65);
+      color: #fff;
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .transport {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .transport-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .timeline-strip {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding: 4px 0;
+    }
+    .tl-seg {
+      min-width: 54px;
+      height: 36px;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      background: #12151e;
+      padding: 3px 6px;
+      font-size: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .tl-seg.active { border-color: var(--accent); background: rgba(247,201,72,0.14); }
+    .trim-box {
+      background: #141821;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      width: 100%;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .row-between {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    /* Right panel tabs & controls */
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+    }
+    .tab-btn {
+      justify-content: center;
+      padding: 7px 6px;
+      background: #12151e;
+    }
+    .tab-btn.active {
+      background: rgba(247, 201, 72, 0.16);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .palette {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    .swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      border: 2px solid rgba(255,255,255,0.2);
+      cursor: pointer;
+      padding: 0;
+    }
+    .swatch.active { border-color: var(--accent); transform: scale(1.1); }
+    .section-card {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .section-card.active { border-color: var(--accent); }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #111;
+      font-weight: 800;
+      font-size: 11px;
+      padding: 0 6px;
+    }
+    .export-status {
+      font-size: 12px;
+      color: var(--mint);
+      font-weight: 600;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+    }
+    label.field {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span>🎬 네일다예쁨 릴스 편집기</span>
+      <span class="badge">9:16 세로 · 폰트·자막·효과음·MP4</span>
+    </div>
+    <div class="header-actions">
+      <label class="btn" style="cursor:pointer;">
+        ➕ 내 영상/사진 추가
+        <input id="fileClips" type="file" accept="video/*,image/*" multiple hidden />
+      </label>
+      <label class="btn" style="cursor:pointer;">
+        🔤 내 폰트 추가 (.ttf/.otf)
+        <input id="fileFont" type="file" accept=".ttf,.otf,.woff,.woff2" multiple hidden />
+      </label>
+      <label class="btn" style="cursor:pointer;">
+        🎵 BGM 추가
+        <input id="fileBgm" type="file" accept="audio/*" hidden />
+      </label>
+      <button id="btnExport" class="primary">⬇️ 영상 내보내기</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <!-- Left: Clips -->
+    <section class="panel">
+      <div class="panel-title">
+        <span>🎞️ 클립 목록 (<span id="clipCount">0</span>개)</span>
+        <span class="muted">클릭해서 선택</span>
+      </div>
+      <div class="muted">영상이나 사진을 올리면 타임라인에 순서대로 붙어요. 순서 이동·교체·구간 자르기가 가능합니다.</div>
+      <div id="clipList" class="clip-list"></div>
+      <div class="trim-box">
+        <div class="row-between">
+          <strong>🎵 배경음악 & 효과음</strong>
+          <span id="bgmName" class="muted">BGM 없음</span>
+        </div>
+        <div class="row">
+          <span class="muted">BGM 볼륨</span>
+          <input id="bgmVol" type="range" min="0" max="100" value="45" style="flex:1;" />
+          <span id="bgmVolLabel" class="muted">45%</span>
+        </div>
+        <div class="row">
+          <span class="muted">원본 소리</span>
+          <input id="clipMute" type="checkbox" checked />
+          <label for="clipMute" class="muted">클립 원본 소리 음소거</label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Center: Preview & Timeline -->
+    <section class="panel preview-wrap">
+      <div class="panel-title" style="width:100%;">
+        <span>📱 실시간 미리보기 (1080×1920)</span>
+        <span id="timeDisplay" class="muted">0:00.0 / 0:00.0</span>
+      </div>
+
+      <div class="canvas-box">
+        <canvas id="stage" width="540" height="960"></canvas>
+        <div class="drag-hint">제목·배지·자막을 끌어다 위치 이동</div>
+      </div>
+
+      <div class="transport">
+        <div class="transport-row">
+          <button id="btnPlay" class="primary">▶ 재생</button>
+          <button id="btnStop">⏹ 처음으로</button>
+          <label class="row muted" style="cursor:pointer;">
+            <input id="chkLoop" type="checkbox" /> 구간 반복
+          </label>
+          <span id="exportStatus" class="export-status" style="margin-left:auto;"></span>
+        </div>
+        <input id="seekBar" type="range" min="0" max="100" step="0.05" value="0" style="width:100%;" />
+        <div id="timelineStrip" class="timeline-strip"></div>
+      </div>
+
+      <div class="trim-box">
+        <div class="row-between">
+          <strong>✂️ 선택한 클립 구간 편집</strong>
+          <span id="selectedClipLabel" class="muted">클립을 선택해 주세요</span>
+        </div>
+        <div class="grid-2">
+          <label class="field">시작 (초)
+            <input id="trimIn" type="number" step="0.1" min="0" value="0" />
+          </label>
+          <label class="field">끝 (초)
+            <input id="trimOut" type="number" step="0.1" min="0.2" value="3.0" />
+          </label>
+        </div>
+        <div class="row">
+          <button id="btnSetIn">시작점 현재 위치로</button>
+          <button id="btnSetOut">끝점 현재 위치로</button>
+          <button id="btnApplyTrim" class="primary" style="margin-left:auto;">이 구간 적용</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Fonts, Design, Sections -->
+    <section class="panel" style="max-height: 860px; overflow-y: auto;">
+      <div class="panel-title">
+        <span>🔤 폰트 · 글자 디자인</span>
+        <button id="btnUnifyFont">전체 통일 적용</button>
+      </div>
+
+      <div class="grid-3">
+        <label class="field">제목 폰트
+          <select id="fontTitle"></select>
+        </label>
+        <label class="field">배지 폰트
+          <select id="fontBadge"></select>
+        </label>
+        <label class="field">자막 폰트
+          <select id="fontSub"></select>
+        </label>
+      </div>
+
+      <div class="row">
+        <span class="muted">프리셋:</span>
+        <button class="preset-btn" data-preset="clean">깔끔 화이트</button>
+        <button class="preset-btn" data-preset="yellow">네온 옐로우</button>
+        <button class="preset-btn" data-preset="box">자막 검정박스</button>
+        <button class="preset-btn" data-preset="mint">민트 포인트</button>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-target="title">제목 디자인</button>
+        <button class="tab-btn" data-target="badge">배지 디자인</button>
+        <button class="tab-btn" data-target="sub">자막 디자인</button>
+      </div>
+
+      <div class="section-card">
+        <div class="row-between">
+          <span class="muted">글자 색</span>
+          <div class="palette" id="colorPalette"></div>
+          <input id="styColor" type="color" value="#ffffff" />
+        </div>
+        <div class="grid-2">
+          <label class="field">크기 (px)
+            <input id="stySize" type="number" min="14" max="120" value="44" />
+          </label>
+          <label class="field">세로 위치 Y (0~960)
+            <input id="styY" type="number" min="20" max="940" value="180" />
+          </label>
+        </div>
+        <div class="row-between">
+          <label class="row"><input id="styStrokeOn" type="checkbox" checked /> 테두리</label>
+          <input id="styStrokeColor" type="color" value="#000000" />
+          <input id="styStrokeW" type="range" min="1" max="12" value="4" style="width:110px;" />
+          <span id="styStrokeLabel" class="muted">4px</span>
+        </div>
+        <div class="row-between">
+          <label class="row"><input id="styShadowOn" type="checkbox" checked /> 그림자</label>
+          <input id="styShadowColor" type="color" value="#000000" />
+          <input id="styShadowBlur" type="range" min="0" max="24" value="8" style="width:110px;" />
+          <span id="styShadowLabel" class="muted">8px</span>
+        </div>
+        <div class="row-between">
+          <label class="row"><input id="styBoxOn" type="checkbox" /> 배경 박스</label>
+          <input id="styBoxColor" type="color" value="#000000" />
+          <input id="styBoxAlpha" type="range" min="10" max="100" value="70" style="width:80px;" />
+          <input id="styBoxRadius" type="number" min="0" max="40" value="14" style="width:52px;" title="둥글기" />
+        </div>
+        <div class="row-between">
+          <button id="btnApplyPosAll">이 위치를 모든 구간에 적용</button>
+          <button id="btnResetStyle">디자인 초기화</button>
+        </div>
+      </div>
+
+      <div class="panel-title" style="margin-top:4px;">
+        <span>💬 구간 제목 · 배지 · 자막 · 효과음</span>
+        <button id="btnAddSection" class="pink">+ 구간 추가</button>
+      </div>
+      <div id="sectionList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </section>
+  </main>
+
+  <script>
+    const BUILTIN_FONTS = [
+      { label: 'Noto Sans KR', value: "'Noto Sans KR', sans-serif" },
+      { label: '주아체 (Jua)', value: "'Jua', sans-serif" },
+      { label: '도현체 (Do Hyeon)', value: "'Do Hyeon', sans-serif" },
+      { label: '고운돋움 (Gowun Dodum)', value: "'Gowun Dodum', sans-serif" },
+      { label: '블랙한산스 (Black Han Sans)', value: "'Black Han Sans', sans-serif" },
+      { label: '나눔고딕', value: "'Nanum Gothic', sans-serif" },
+      { label: '나눔명조', value: "'Nanum Myeongjo', serif" }
+    ];
+
+    const PALETTE = ['#ffffff', '#111111', '#f7c948', '#ff7eb6', '#5eead4', '#60a5fa', '#fb7185', '#a78bfa'];
+
+    const DEFAULT_STYLES = () => ({
+      title: { font: BUILTIN_FONTS[1].value, color: '#f7c948', size: 42, x: 270, y: 150, strokeOn: true, strokeColor: '#000000', strokeW: 5, shadowOn: true, shadowColor: '#000000', shadowBlur: 8, boxOn: false, boxColor: '#000000', boxAlpha: 70, boxRadius: 12 },
+      badge: { font: BUILTIN_FONTS[0].value, color: '#ffffff', size: 22, x: 270, y: 215, strokeOn: false, strokeColor: '#000000', strokeW: 2, shadowOn: false, shadowColor: '#000000', shadowBlur: 4, boxOn: true, boxColor: '#000000', boxAlpha: 78, boxRadius: 18 },
+      sub:   { font: BUILTIN_FONTS[0].value, color: '#ffffff', size: 28, x: 270, y: 790, strokeOn: true, strokeColor: '#000000', strokeW: 4, shadowOn: true, shadowColor: '#000000', shadowBlur: 8, boxOn: false, boxColor: '#000000', boxAlpha: 70, boxRadius: 14 }
+    });
+
+    const state = {
+      clips: [],
+      selectedClipIdx: -1,
+      sections: [
+        { id: 1, start: 0.0, end: 3.0, title: '네일다예쁨 이달의 아트', badge: '전주 만성동 1인 네일샵', sub: '손톱이 예뻐지는 시간 ✨', sfx: 'pop', sfxPlayed: false }
+      ],
+      activeTarget: 'title',
+      styles: DEFAULT_STYLES(),
+      customFonts: [],
+      playing: false,
+      currentTime: 0,
+      lastTick: 0,
+      bgmAudio: null,
+      bgmBuffer: null,
+      sfxTriggers: new Set(),
+      dragging: null
+    };
+
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+    let audioCtx = null;
+
+    function ensureAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    // Built-in Web Audio SFX synthesizer (no external mp3 needed!)
+    function playSfx(type, destNode = null) {
+      if (!type || type === 'none') return;
+      const ac = ensureAudioCtx();
+      const now = ac.currentTime;
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      if (destNode) gain.connect(destNode);
+
+      if (type === 'pop') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(760, now + 0.09);
+        gain.gain.setValueAtTime(0.32, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.start(now); osc.stop(now + 0.13);
+      } else if (type === 'ding') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.setValueAtTime(1318, now + 0.09);
+        gain.gain.setValueAtTime(0.28, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc.start(now); osc.stop(now + 0.46);
+      } else if (type === 'shutter') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(1200, now);
+        osc.frequency.exponentialRampToValueAtTime(180, now + 0.06);
+        gain.gain.setValueAtTime(0.22, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+        osc.start(now); osc.stop(now + 0.08);
+      } else if (type === 'whoosh') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.exponentialRampToValueAtTime(520, now + 0.18);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc.start(now); osc.stop(now + 0.23);
+      }
+    }
+
+    function totalDuration() {
+      if (!state.clips.length) {
+        return state.sections.reduce((m, s) => Math.max(m, s.end), 3.0);
+      }
+      return state.clips.reduce((sum, c) => sum + Math.max(0.2, c.out - c.in), 0);
+    }
+
+    function fmtTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = (sec % 60).toFixed(1).padStart(4, '0');
+      return `${m}:${s}`;
+    }
+
+    function populateFonts() {
+      const all = [...BUILTIN_FONTS, ...state.customFonts];
+      ['fontTitle', 'fontBadge', 'fontSub'].forEach((id, idx) => {
+        const sel = document.getElementById(id);
+        const key = ['title', 'badge', 'sub'][idx];
+        const prev = state.styles[key].font;
+        sel.innerHTML = all.map(f => `<option value="${f.value.replace(/"/g, '&quot;')}">${f.label}</option>`).join('');
+        sel.value = prev;
+      });
+    }
+
+    function renderPalette() {
+      const wrap = document.getElementById('colorPalette');
+      const cur = state.styles[state.activeTarget].color.toLowerCase();
+      wrap.innerHTML = PALETTE.map(c => `<button class="swatch ${c === cur ? 'active' : ''}" style="background:${c}" data-c="${c}"></button>`).join('');
+      wrap.querySelectorAll('.swatch').forEach(btn => {
+        btn.onclick = () => {
+          state.styles[state.activeTarget].color = btn.dataset.c;
+          syncStyleInputs();
+          drawFrame();
+        };
+      });
+    }
+
+    function syncStyleInputs() {
+      const st = state.styles[state.activeTarget];
+      document.getElementById('styColor').value = st.color;
+      document.getElementById('stySize').value = st.size;
+      document.getElementById('styY').value = Math.round(st.y);
+      document.getElementById('styStrokeOn').checked = st.strokeOn;
+      document.getElementById('styStrokeColor').value = st.strokeColor;
+      document.getElementById('styStrokeW').value = st.strokeW;
+      document.getElementById('styStrokeLabel').textContent = `${st.strokeW}px`;
+      document.getElementById('styShadowOn').checked = st.shadowOn;
+      document.getElementById('styShadowColor').value = st.shadowColor;
+      document.getElementById('styShadowBlur').value = st.shadowBlur;
+      document.getElementById('styShadowLabel').textContent = `${st.shadowBlur}px`;
+      document.getElementById('styBoxOn').checked = st.boxOn;
+      document.getElementById('styBoxColor').value = st.boxColor;
+      document.getElementById('styBoxAlpha').value = st.boxAlpha;
+      document.getElementById('styBoxRadius').value = st.boxRadius;
+      renderPalette();
+    }
+
+    function renderClips() {
+      document.getElementById('clipCount').textContent = state.clips.length;
+      const list = document.getElementById('clipList');
+      const strip = document.getElementById('timelineStrip');
+      if (!state.clips.length) {
+        list.innerHTML = '<div class="muted" style="grid-column:1/-1; padding:18px; text-align:center; border:1px dashed var(--border); border-radius:8px;">상단 [내 영상/사진 추가]를 눌러 클립을 올려 주세요.</div>';
+        strip.innerHTML = '<div class="muted">타임라인이 비어 있어요</div>';
+        return;
+      }
+
+      list.innerHTML = state.clips.map((c, i) => `
+        <div class="clip-card ${i === state.selectedClipIdx ? 'active' : ''}" data-idx="${i}">
+          <img class="clip-thumb" src="${c.thumb}" alt="" />
+          <div class="clip-meta">
+            <div class="clip-name">${i + 1}. ${c.name}</div>
+            <div class="clip-actions">
+              <span class="muted">${(c.out - c.in).toFixed(1)}초</span>
+              <div>
+                <button onclick="event.stopPropagation(); moveClip(${i}, -1)">◀</button>
+                <button onclick="event.stopPropagation(); moveClip(${i}, 1)">▶</button>
+                <button class="danger" onclick="event.stopPropagation(); removeClip(${i})">✕</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.clip-card').forEach(el => {
+        el.onclick = () => selectClip(Number(el.dataset.idx));
+      });
+
+      let acc = 0;
+      strip.innerHTML = state.clips.map((c, i) => {
+        const dur = Math.max(0.2, c.out - c.in);
+        const html = `<div class="tl-seg ${i === state.selectedClipIdx ? 'active' : ''}" style="width:${Math.max(58, dur * 24)}px" onclick="jumpToClip(${i}, ${acc})">
+          <strong>#${i + 1}</strong><span>${dur.toFixed(1)}s</span>
+        </div>`;
+        acc += dur;
+        return html;
+      }).join('');
+
+      const seek = document.getElementById('seekBar');
+      seek.max = Math.max(0.5, totalDuration()).toFixed(2);
+    }
+
+    window.moveClip = (idx, dir) => {
+      const ni = idx + dir;
+      if (ni < 0 || ni >= state.clips.length) return;
+      [state.clips[idx], state.clips[ni]] = [state.clips[ni], state.clips[idx]];
+      state.selectedClipIdx = ni;
+      renderClips();
+      drawFrame();
+    };
+
+    window.removeClip = (idx) => {
+      state.clips.splice(idx, 1);
+      if (state.selectedClipIdx >= state.clips.length) state.selectedClipIdx = state.clips.length - 1;
+      renderClips();
+      drawFrame();
+    };
+
+    window.jumpToClip = (idx, startT) => {
+      selectClip(idx);
+      state.currentTime = startT;
+      drawFrame();
+    };
+
+    function selectClip(idx) {
+      state.selectedClipIdx = idx;
+      const c = state.clips[idx];
+      if (c) {
+        document.getElementById('selectedClipLabel').textContent = `#${idx + 1} ${c.name} (총 ${c.duration.toFixed(1)}초)`;
+        document.getElementById('trimIn').value = c.in.toFixed(1);
+        document.getElementById('trimOut').value = c.out.toFixed(1);
+      }
+      renderClips();
+    }
+
+    function renderSections() {
+      const list = document.getElementById('sectionList');
+      list.innerHTML = state.sections.map((s, idx) => `
+        <div class="section-card">
+          <div class="row-between">
+            <div class="row">
+              <span class="pill">${idx + 1}</span>
+              <input type="number" step="0.1" min="0" value="${s.start}" style="width:62px;" onchange="updateSec(${idx}, 'start', Number(this.value))" />
+              <span>~</span>
+              <input type="number" step="0.1" min="0.2" value="${s.end}" style="width:62px;" onchange="updateSec(${idx}, 'end', Number(this.value))" />
+            </div>
+            <div class="row">
+              <select onchange="updateSec(${idx}, 'sfx', this.value); playSfx(this.value);">
+                <option value="none" ${s.sfx === 'none' ? 'selected' : ''}>효과음 없음</option>
+                <option value="pop" ${s.sfx === 'pop' ? 'selected' : ''}>🔊 뿅!</option>
+                <option value="ding" ${s.sfx === 'ding' ? 'selected' : ''}>🔔 딩동</option>
+                <option value="shutter" ${s.sfx === 'shutter' ? 'selected' : ''}>📸 찰칵</option>
+                <option value="whoosh" ${s.sfx === 'whoosh' ? 'selected' : ''}>💨 스우시</option>
+              </select>
+              <button class="danger" onclick="removeSec(${idx})">✕</button>
+            </div>
+          </div>
+          <input type="text" placeholder="제목 (예: 네일다예쁨 이달의 아트)" value="${s.title.replace(/"/g, '&quot;')}" oninput="updateSec(${idx}, 'title', this.value)" />
+          <input type="text" placeholder="배지 (예: 전주 만성동 1인 네일샵)" value="${s.badge.replace(/"/g, '&quot;')}" oninput="updateSec(${idx}, 'badge', this.value)" />
+          <input type="text" placeholder="자막 (예: 손톱이 예뻐지는 시간 ✨)" value="${s.sub.replace(/"/g, '&quot;')}" oninput="updateSec(${idx}, 'sub', this.value)" />
+        </div>
+      `).join('');
+    }
+
+    window.updateSec = (idx, key, val) => {
+      state.sections[idx][key] = val;
+      drawFrame();
+    };
+    window.removeSec = (idx) => {
+      if (state.sections.length <= 1) return;
+      state.sections.splice(idx, 1);
+      renderSections();
+      drawFrame();
+    };
+
+    function getClipAtTime(t) {
+      let acc = 0;
+      for (let i = 0; i < state.clips.length; i++) {
+        const c = state.clips[i];
+        const dur = Math.max(0.2, c.out - c.in);
+        if (t >= acc && t < acc + dur) {
+          return { clip: c, localTime: c.in + (t - acc) };
+        }
+        acc += dur;
+      }
+      if (state.clips.length) {
+        const last = state.clips[state.clips.length - 1];
+        return { clip: last, localTime: last.out };
+      }
+      return null;
+    }
+
+    function hexToRgba(hex, alphaPct) {
+      const h = hex.replace('#', '');
+      const r = parseInt(h.substring(0, 2), 16) || 0;
+      const g = parseInt(h.substring(2, 4), 16) || 0;
+      const b = parseInt(h.substring(4, 6), 16) || 0;
+      return `rgba(${r},${g},${b},${(alphaPct / 100).toFixed(2)})`;
+    }
+
+    function drawTextLayer(text, st) {
+      if (!text || !text.trim()) return;
+      ctx.save();
+      ctx.font = `700 ${st.size}px ${st.font}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      const metrics = ctx.measureText(text);
+      const padX = 18;
+      const padY = 10;
+      const boxW = metrics.width + padX * 2;
+      const boxH = st.size + padY * 2;
+
+      if (st.boxOn) {
+        ctx.fillStyle = hexToRgba(st.boxColor, st.boxAlpha);
+        const rx = st.x - boxW / 2;
+        const ry = st.y - boxH / 2;
+        ctx.beginPath();
+        ctx.roundRect(rx, ry, boxW, boxH, st.boxRadius);
+        ctx.fill();
+      }
+
+      if (st.shadowOn) {
+        ctx.shadowColor = st.shadowColor;
+        ctx.shadowBlur = st.shadowBlur;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 3;
+      } else {
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+      }
+
+      if (st.strokeOn && st.strokeW > 0) {
+        ctx.lineWidth = st.strokeW;
+        ctx.strokeStyle = st.strokeColor;
+        ctx.lineJoin = 'round';
+        ctx.strokeText(text, st.x, st.y);
+      }
+
+      ctx.fillStyle = st.color;
+      ctx.fillText(text, st.x, st.y);
+      ctx.restore();
+    }
+
+    function drawCoverMedia(media, mw, mh) {
+      const cw = canvas.width;
+      const ch = canvas.height;
+      const scale = Math.max(cw / mw, ch / mh);
+      const dw = mw * scale;
+      const dh = mh * scale;
+      ctx.drawImage(media, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+    }
+
+    function drawFrame() {
+      const tot = totalDuration();
+      document.getElementById('timeDisplay').textContent = `${fmtTime(state.currentTime)} / ${fmtTime(tot)}`;
+      document.getElementById('seekBar').value = state.currentTime.toFixed(2);
+
+      ctx.fillStyle = '#090b10';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const hit = getClipAtTime(state.currentTime);
+      if (hit) {
+        const { clip, localTime } = hit;
+        if (clip.type === 'image') {
+          drawCoverMedia(clip.el, clip.el.naturalWidth || 540, clip.el.naturalHeight || 960);
+        } else {
+          if (Math.abs(clip.el.currentTime - localTime) > 0.12 && !state.playing) {
+            clip.el.currentTime = localTime;
+          }
+          if (clip.el.readyState >= 2) {
+            drawCoverMedia(clip.el, clip.el.videoWidth || 540, clip.el.videoHeight || 960);
+          }
+        }
+      } else {
+        ctx.fillStyle = '#181c28';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#8b95a7';
+        ctx.font = '600 18px "Noto Sans KR", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('왼쪽 [내 영상/사진 추가]로 클립을 올려 주세요', canvas.width / 2, canvas.height / 2);
+      }
+
+      const sec = state.sections.find(s => state.currentTime >= s.start && state.currentTime <= s.end);
+      if (sec) {
+        drawTextLayer(sec.title, state.styles.title);
+        drawTextLayer(sec.badge, state.styles.badge);
+        drawTextLayer(sec.sub, state.styles.sub);
+      }
+    }
+
+    function loop(ts) {
+      if (!state.playing) return;
+      if (!state.lastTick) state.lastTick = ts;
+      const dt = Math.min(0.1, (ts - state.lastTick) / 1000);
+      state.lastTick = ts;
+      state.currentTime += dt;
+
+      const tot = totalDuration();
+      if (state.currentTime >= tot) {
+        if (document.getElementById('chkLoop').checked) {
+          state.currentTime = 0;
+          state.sfxTriggers.clear();
+          if (state.bgmAudio) { state.bgmAudio.currentTime = 0; state.bgmAudio.play().catch(() => {}); }
+        } else {
+          stopPlayback();
+          return;
+        }
+      }
+
+      // Sync video playback
+      const hit = getClipAtTime(state.currentTime);
+      state.clips.forEach(c => {
+        if (c.type === 'video') {
+          if (hit && hit.clip === c) {
+            c.el.muted = document.getElementById('clipMute').checked;
+            if (Math.abs(c.el.currentTime - hit.localTime) > 0.25) c.el.currentTime = hit.localTime;
+            if (c.el.paused) c.el.play().catch(() => {});
+          } else if (!c.el.paused) {
+            c.el.pause();
+          }
+        }
+      });
+
+      // Trigger SFX at section start
+      state.sections.forEach(s => {
+        if (s.sfx && s.sfx !== 'none' && state.currentTime >= s.start && state.currentTime < s.start + 0.15) {
+          if (!state.sfxTriggers.has(s.id)) {
+            state.sfxTriggers.add(s.id);
+            playSfx(s.sfx);
+          }
+        }
+      });
+
+      drawFrame();
+      requestAnimationFrame(loop);
+    }
+
+    function stopPlayback() {
+      state.playing = false;
+      state.lastTick = 0;
+      state.currentTime = 0;
+      state.sfxTriggers.clear();
+      document.getElementById('btnPlay').textContent = '▶ 재생';
+      state.clips.forEach(c => { if (c.type === 'video') c.el.pause(); });
+      if (state.bgmAudio) { state.bgmAudio.pause(); state.bgmAudio.currentTime = 0; }
+      drawFrame();
+    }
+
+    document.getElementById('btnPlay').onclick = () => {
+      if (state.playing) {
+        state.playing = false;
+        state.lastTick = 0;
+        document.getElementById('btnPlay').textContent = '▶ 재생';
+        state.clips.forEach(c => { if (c.type === 'video') c.el.pause(); });
+        if (state.bgmAudio) state.bgmAudio.pause();
+      } else {
+        ensureAudioCtx();
+        state.playing = true;
+        state.lastTick = 0;
+        document.getElementById('btnPlay').textContent = '⏸ 일시정지';
+        if (state.bgmAudio) {
+          state.bgmAudio.volume = Number(document.getElementById('bgmVol').value) / 100;
+          state.bgmAudio.currentTime = state.currentTime;
+          state.bgmAudio.play().catch(() => {});
+        }
+        requestAnimationFrame(loop);
+      }
+    };
+
+    document.getElementById('btnStop').onclick = stopPlayback;
+
+    document.getElementById('seekBar').oninput = (e) => {
+      state.currentTime = Number(e.target.value);
+      state.sfxTriggers.clear();
+      drawFrame();
+    };
+
+    // File uploads
+    document.getElementById('fileClips').onchange = async (e) => {
+      const files = Array.from(e.target.files || []);
+      for (const file of files) {
+        const url = URL.createObjectURL(file);
+        if (file.type.startsWith('image/')) {
+          const img = new Image();
+          img.src = url;
+          await new Promise(res => { img.onload = res; img.onerror = res; });
+          state.clips.push({ name: file.name, type: 'image', el: img, thumb: url, duration: 3.0, in: 0, out: 3.0 });
+        } else {
+          const vid = document.createElement('video');
+          vid.src = url;
+          vid.playsInline = true;
+          vid.preload = 'auto';
+          await new Promise(res => { vid.onloadeddata = res; vid.onerror = res; });
+          vid.currentTime = 0.1;
+          await new Promise(res => { vid.onseeked = res; setTimeout(res, 400); });
+          const cThumb = document.createElement('canvas');
+          cThumb.width = 180; cThumb.height = 240;
+          cThumb.getContext('2d').drawImage(vid, 0, 0, 180, 240);
+          const dur = Math.max(0.5, vid.duration || 3.0);
+          state.clips.push({ name: file.name, type: 'video', el: vid, thumb: cThumb.toDataURL('image/jpeg', 0.7), duration: dur, in: 0, out: Math.min(dur, 4.0) });
+        }
+      }
+      if (state.selectedClipIdx === -1 && state.clips.length) selectClip(0);
+      renderClips();
+      drawFrame();
+      e.target.value = '';
+    };
+
+    document.getElementById('fileFont').onchange = async (e) => {
+      for (const file of Array.from(e.target.files || [])) {
+        const name = file.name.replace(/\.[^.]+$/, '');
+        const buf = await file.arrayBuffer();
+        const face = new FontFace(name, buf);
+        await face.load();
+        document.fonts.add(face);
+        state.customFonts.push({ label: `${name} (내 폰트)`, value: `'${name}', sans-serif` });
+      }
+      populateFonts();
+      drawFrame();
+      e.target.value = '';
+    };
+
+    document.getElementById('fileBgm').onchange = (e) => {
+      const f = e.target.files?.[0];
+      if (!f) return;
+      const url = URL.createObjectURL(f);
+      state.bgmAudio = new Audio(url);
+      state.bgmAudio.loop = true;
+      document.getElementById('bgmName').textContent = f.name;
+      e.target.value = '';
+    };
+
+    document.getElementById('bgmVol').oninput = (e) => {
+      document.getElementById('bgmVolLabel').textContent = `${e.target.value}%`;
+      if (state.bgmAudio) state.bgmAudio.volume = Number(e.target.value) / 100;
+    };
+
+    // Trim controls
+    document.getElementById('btnSetIn').onclick = () => {
+      if (state.selectedClipIdx < 0) return;
+      document.getElementById('trimIn').value = state.currentTime.toFixed(1);
+    };
+    document.getElementById('btnSetOut').onclick = () => {
+      if (state.selectedClipIdx < 0) return;
+      document.getElementById('trimOut').value = Math.max(0.2, state.currentTime).toFixed(1);
+    };
+    document.getElementById('btnApplyTrim').onclick = () => {
+      const c = state.clips[state.selectedClipIdx];
+      if (!c) return;
+      const tin = Math.max(0, Number(document.getElementById('trimIn').value));
+      const tout = Math.min(c.duration, Math.max(tin + 0.2, Number(document.getElementById('trimOut').value)));
+      c.in = tin; c.out = tout;
+      renderClips();
+      drawFrame();
+    };
+
+    // Style & Font controls
+    ['fontTitle', 'fontBadge', 'fontSub'].forEach((id, idx) => {
+      const key = ['title', 'badge', 'sub'][idx];
+      document.getElementById(id).onchange = (e) => {
+        state.styles[key].font = e.target.value;
+        drawFrame();
+      };
+    });
+    document.getElementById('btnUnifyFont').onclick = () => {
+      const f = state.styles.title.font;
+      state.styles.badge.font = f;
+      state.styles.sub.font = f;
+      populateFonts();
+      drawFrame();
+    };
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.activeTarget = btn.dataset.target;
+        syncStyleInputs();
+      };
+    });
+
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.onclick = () => {
+        const p = btn.dataset.preset;
+        const st = state.styles[state.activeTarget];
+        if (p === 'clean') { st.color = '#ffffff'; st.strokeOn = false; st.shadowOn = true; st.shadowBlur = 8; st.boxOn = false; }
+        if (p === 'yellow') { st.color = '#f7c948'; st.strokeOn = true; st.strokeColor = '#000000'; st.strokeW = 5; st.shadowOn = true; st.boxOn = false; }
+        if (p === 'box') { st.color = '#ffffff'; st.strokeOn = false; st.shadowOn = false; st.boxOn = true; st.boxColor = '#000000'; st.boxAlpha = 78; st.boxRadius = 14; }
+        if (p === 'mint') { st.color = '#5eead4'; st.strokeOn = true; st.strokeColor = '#111111'; st.strokeW = 4; st.shadowOn = true; st.boxOn = false; }
+        syncStyleInputs();
+        drawFrame();
+      };
+    });
+
+    const bindInput = (id, fn) => {
+      document.getElementById(id).oninput = (e) => { fn(e.target); syncStyleInputs(); drawFrame(); };
+    };
+    bindInput('styColor', el => state.styles[state.activeTarget].color = el.value);
+    bindInput('stySize', el => state.styles[state.activeTarget].size = Number(el.value));
+    bindInput('styY', el => state.styles[state.activeTarget].y = Number(el.value));
+    bindInput('styStrokeOn', el => state.styles[state.activeTarget].strokeOn = el.checked);
+    bindInput('styStrokeColor', el => state.styles[state.activeTarget].strokeColor = el.value);
+    bindInput('styStrokeW', el => state.styles[state.activeTarget].strokeW = Number(el.value));
+    bindInput('styShadowOn', el => state.styles[state.activeTarget].shadowOn = el.checked);
+    bindInput('styShadowColor', el => state.styles[state.activeTarget].shadowColor = el.value);
+    bindInput('styShadowBlur', el => state.styles[state.activeTarget].shadowBlur = Number(el.value));
+    bindInput('styBoxOn', el => state.styles[state.activeTarget].boxOn = el.checked);
+    bindInput('styBoxColor', el => state.styles[state.activeTarget].boxColor = el.value);
+    bindInput('styBoxAlpha', el => state.styles[state.activeTarget].boxAlpha = Number(el.value));
+    bindInput('styBoxRadius', el => state.styles[state.activeTarget].boxRadius = Number(el.value));
+
+    document.getElementById('btnResetStyle').onclick = () => {
+      state.styles = DEFAULT_STYLES();
+      populateFonts();
+      syncStyleInputs();
+      drawFrame();
+    };
+
+    document.getElementById('btnApplyPosAll').onclick = () => {
+      alert('현재 위치(X, Y)가 모든 구간에 공통 적용됩니다!');
+    };
+
+    document.getElementById('btnAddSection').onclick = () => {
+      const last = state.sections[state.sections.length - 1];
+      const st = last ? Number(last.end.toFixed(1)) : 0;
+      state.sections.push({ id: Date.now(), start: st, end: Number((st + 3.0).toFixed(1)), title: '', badge: '', sub: '새 자막을 입력해 주세요', sfx: 'none' });
+      renderSections();
+      drawFrame();
+    };
+
+    // Drag text on canvas
+    function canvasPos(clientX, clientY) {
+      const r = canvas.getBoundingClientRect();
+      return {
+        x: ((clientX - r.left) / r.width) * canvas.width,
+        y: ((clientY - r.top) / r.height) * canvas.height
+      };
+    }
+    function startDrag(cx, cy) {
+      const p = canvasPos(cx, cy);
+      let best = null, minD = 90;
+      ['title', 'badge', 'sub'].forEach(k => {
+        const d = Math.hypot(p.x - state.styles[k].x, p.y - state.styles[k].y);
+        if (d < minD) { minD = d; best = k; }
+      });
+      if (best) {
+        state.dragging = best;
+        state.activeTarget = best;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.target === best));
+        syncStyleInputs();
+      }
+    }
+    function moveDrag(cx, cy) {
+      if (!state.dragging) return;
+      const p = canvasPos(cx, cy);
+      state.styles[state.dragging].x = Math.max(40, Math.min(500, p.x));
+      state.styles[state.dragging].y = Math.max(30, Math.min(930, p.y));
+      syncStyleInputs();
+      drawFrame();
+    }
+    canvas.addEventListener('mousedown', e => startDrag(e.clientX, e.clientY));
+    window.addEventListener('mousemove', e => moveDrag(e.clientX, e.clientY));
+    window.addEventListener('mouseup', () => state.dragging = null);
+    canvas.addEventListener('touchstart', e => { if (e.touches[0]) startDrag(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+    canvas.addEventListener('touchmove', e => { if (state.dragging && e.touches[0]) { e.preventDefault(); moveDrag(e.touches[0].clientX, e.touches[0].clientY); } }, { passive: false });
+    canvas.addEventListener('touchend', () => state.dragging = null);
+
+    // Export Video (Canvas + Web Audio MediaRecorder)
+    document.getElementById('btnExport').onclick = async () => {
+      const btn = document.getElementById('btnExport');
+      const status = document.getElementById('exportStatus');
+      if (!state.clips.length) { alert('먼저 영상이나 사진을 1개 이상 추가해 주세요!'); return; }
+
+      stopPlayback();
+      ensureAudioCtx();
+      btn.disabled = true;
+      status.textContent = '렌더링 준비 중...';
+
+      const stream = canvas.captureStream(30);
+      const dest = audioCtx.createMediaStreamDestination();
+      const tracks = [...stream.getVideoTracks(), ...dest.stream.getAudioTracks()];
+      const combined = new MediaStream(tracks);
+
+      const mime = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4'
+        : MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+
+      const chunks = [];
+      const rec = new MediaRecorder(combined, { mimeType: mime, videoBitsPerSecond: 5000000 });
+      rec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+      rec.onstop = () => {
+        const blob = new Blob(chunks, { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `naildayeppeum-reels.${mime.includes('mp4') ? 'mp4' : 'webm'}`;
+        a.click();
+        status.textContent = '✅ 저장 완료!';
+        btn.disabled = false;
+        setTimeout(() => { status.textContent = ''; }, 4000);
+      };
+
+      // Route BGM if present
+      let bgmSrc = null;
+      if (state.bgmAudio) {
+        try {
+          bgmSrc = audioCtx.createMediaElementSource(state.bgmAudio);
+          const bgmGain = audioCtx.createGain();
+          bgmGain.gain.value = Number(document.getElementById('bgmVol').value) / 100;
+          bgmSrc.connect(bgmGain);
+          bgmGain.connect(dest);
+          state.bgmAudio.currentTime = 0;
+          state.bgmAudio.play().catch(() => {});
+        } catch (_) {}
+      }
+
+      rec.start();
+      const tot = totalDuration();
+      state.currentTime = 0;
+      state.sfxTriggers.clear();
+      const t0 = performance.now();
+
+      function renderExport() {
+        const elapsed = (performance.now() - t0) / 1000;
+        state.currentTime = elapsed;
+        status.textContent = `녹화 중 ${Math.min(100, Math.round((elapsed / tot) * 100))}%`;
+
+        const hit = getClipAtTime(elapsed);
+        state.clips.forEach(c => {
+          if (c.type === 'video') {
+            if (hit && hit.clip === c) {
+              c.el.muted = document.getElementById('clipMute').checked;
+              if (c.el.paused) c.el.play().catch(() => {});
+            } else if (!c.el.paused) c.el.pause();
+          }
+        });
+
+        state.sections.forEach(s => {
+          if (s.sfx && s.sfx !== 'none' && elapsed >= s.start && elapsed < s.start + 0.15) {
+            if (!state.sfxTriggers.has(s.id)) {
+              state.sfxTriggers.add(s.id);
+              playSfx(s.sfx, dest);
+            }
+          }
+        });
+
+        drawFrame();
+        if (elapsed < tot) {
+          requestAnimationFrame(renderExport);
+        } else {
+          rec.stop();
+          stopPlayback();
+        }
+      }
+      requestAnimationFrame(renderExport);
+    };
+
+    // Init
+    populateFonts();
+    syncStyleInputs();
+    renderClips();
+    renderSections();
+    drawFrame();
+  </script>
+</body>
+</html>
